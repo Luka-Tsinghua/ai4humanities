@@ -1,1 +1,1 @@
-# vibe-coding-for-Humaner
+# vibe-coding-for-MarkdownPhilosopher
