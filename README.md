@@ -1,1 +1,1 @@
-# vibe-coding-for-HumanitiesFolks
+# vibe-coding-for-Humaner
