@@ -52,6 +52,61 @@ Use it when you want less guesswork and more evidence-backed configuration chang
 
 ---
 
+## Platform notes: login & auth state (multi-OS)
+
+NotebookLM login is **browser-interactive**. Whether you can run `notebooklm login` directly depends on whether your environment has a usable browser UI.
+
+### Strategy matrix / 策略矩阵
+
+| Environment | Recommended login method | Auth state location | Notes |
+|---|---|---|---|
+| macOS (OpenClaw native) | Run `notebooklm login` locally | `$NOTEBOOKLM_HOME/storage_state.json` | Works with a GUI browser |
+| Linux desktop (OpenClaw native) | Run `notebooklm login` locally | `$NOTEBOOKLM_HOME/storage_state.json` | Needs a GUI browser |
+| Windows (OpenClaw native) | Run `notebooklm login` in PowerShell | `%NOTEBOOKLM_HOME%\storage_state.json` | Works with default browser |
+| WSL2 headless (OpenClaw in WSL2) | **Reuse host auth** (Windows → WSL2) | Link/copy to `~/.notebooklm/storage_state.json` | Recommended when WSL2 has no GUI |
+| Linux server / headless | Login on a GUI machine, then securely copy auth state | `$NOTEBOOKLM_HOME/storage_state.json` | Treat as secret; strict permissions |
+
+### Standardize auth storage with NOTEBOOKLM_HOME
+**ZH**：建议统一用 `NOTEBOOKLM_HOME`，便于迁移/复用/隔离不同账号。  
+**EN**: Use `NOTEBOOKLM_HOME` to isolate and move auth state safely.
+
+Linux/macOS:
+```bash
+export NOTEBOOKLM_HOME="$HOME/.notebooklm"
+```
+
+PowerShell:
+```powershell
+$env:NOTEBOOKLM_HOME = "$env:USERPROFILE\.notebooklm"
+```
+
+---
+
+## WSL2 (headless) auth reuse: Windows → WSL2
+
+**Why**: WSL2 is commonly headless and cannot finish a browser OAuth flow inside the distro.
+
+**Steps**
+1) Login on Windows:
+```powershell
+notebooklm login
+```
+
+2) In WSL2, link the auth state:
+```bash
+mkdir -p ~/.notebooklm
+ln -sf /mnt/c/Users/<YOUR_WINDOWS_USER>/.notebooklm/storage_state.json ~/.notebooklm/storage_state.json
+```
+
+3) Verify:
+```bash
+notebooklm auth check --test --json
+```
+
+> If `auth check` shows 401/expired: re-run `notebooklm login` on Windows, then re-check in WSL2.
+
+---
+
 ## Quickstart
 
 ### 1) Install notebooklm-py
@@ -117,26 +172,14 @@ openclaw cron add   --session isolated   --cron "0 5 * * 2"   --tz "Asia/Shangha
 
 ```text
 skills/notebook_openclaw/
-  SKILL.md                # Skill entry (ZH/EN)
-  README.md               # This file
-  SECURITY.md             # Security policy (ZH/EN)
-  gitignore.snippet       # Copy into repo root .gitignore
+  SKILL.md
+  README.md
+  SECURITY.md
+  gitignore.snippet
+  INSTALL_NOTES.md
   tools/
-    sync_openclaw_doc.sh  # Sitemap-based incremental importer + report generator
+    sync_openclaw_doc.sh
 ```
-
----
-
-## Contributing
-
-PRs are welcome, especially for:
-- Better rate-limit handling / retry strategies
-- More robust sitemap parsing
-- Improved docs-first examples
-
-**Rules**
-- Never include credentials/cookies/session files in issues/PRs.
-- Keep changes fully redacted and reproducible.
 
 ---
 
@@ -144,10 +187,3 @@ PRs are welcome, especially for:
 
 Choose a license at the repo root (MIT/Apache-2.0 recommended).  
 This skill is an integration recipe; upstream projects retain their own licenses.
-
----
-
-## Credits
-
-- `notebooklm-py` (community project): https://pypi.org/project/notebooklm-py/
-- OpenClaw documentation: https://docs.openclaw.ai/
