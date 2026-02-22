@@ -1,11 +1,54 @@
-# Install Notes (ZH/EN)
+# Install Notes
 
-## ZH
-- macOS/Linux（桌面）：可直接在本机运行 `notebooklm login` 完成登录。
-- Windows：在 PowerShell 中运行 `notebooklm login`。
-- WSL2 / headless：在宿主机/带 GUI 的机器完成登录后，把 `NOTEBOOKLM_HOME/storage_state.json` 安全复用到目标环境（WSL2 推荐软链接到 `/mnt/c/.../.notebooklm/storage_state.json`）。
+This skill is designed to be **OS-agnostic**. The only platform-specific part is **NotebookLM authentication**.
 
-## EN
-- macOS/Linux (desktop): run `notebooklm login` locally.
-- Windows: run `notebooklm login` in PowerShell.
-- WSL2 / headless: login on a GUI machine, then securely reuse `NOTEBOOKLM_HOME/storage_state.json` in the target environment (WSL2: symlink from `/mnt/c/.../.notebooklm/storage_state.json`).
+NotebookLM login is browser-interactive. Choose one of these patterns:
+
+## macOS / Linux (desktop with GUI browser)
+
+- Install and run:
+
+```bash
+pip install -U "notebooklm-py[browser]"
+playwright install chromium
+notebooklm login
+```
+
+## Windows (native)
+
+- Run in PowerShell:
+
+```powershell
+pip install -U "notebooklm-py[browser]"
+playwright install chromium
+notebooklm login
+```
+
+## WSL2 (Windows + WSL2)
+
+WSL2 is often headless (no GUI browser), so login cannot complete inside WSL2.
+
+**Recommended pattern: login on Windows → reuse auth in WSL2 via symlink**
+
+```bash
+mkdir -p ~/.notebooklm
+ln -sf /mnt/c/Users/<YOUR_WINDOWS_USER>/.notebooklm/storage_state.json ~/.notebooklm/storage_state.json
+notebooklm auth check --test --json
+```
+
+When auth expires: re-run `notebooklm login` on Windows.
+
+## Linux server / headless environments
+
+Login requires a browser. Options:
+
+- Login on a GUI machine, then securely copy `storage_state.json` to the server under `~/.notebooklm/`.
+- Or use a remote desktop / browser-capable session for the server.
+
+## Security
+
+`storage_state.json` contains session auth state. Treat it like a password:
+
+- never commit to git
+- never paste to issues/chats
+- never upload publicly
